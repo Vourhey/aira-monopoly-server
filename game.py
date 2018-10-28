@@ -3,11 +3,9 @@ from player import Player
 from tx import Tx
 
 class Game:
-    gameId = 0
-    players = {}
-    txs = {}
-
     def __init__(self):
+        self.players = {}
+        self.txs = {}
         self.gameId = random.randint(0, 2**32)
         self.players[0] = Player(True)  # add bank player
 
@@ -24,3 +22,9 @@ class Game:
 
     def leaveTheGame(self, who):
         del self.players[who]
+
+    def __str__(self):
+        return ', '.join("{!s}={!r}".format(key,val) for (key,val) in self.players.items())
+
+    def __repr__(self):
+        return ', '.join("{!s}={!r}".format(key,val) for (key,val) in self.players.items())

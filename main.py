@@ -1,9 +1,11 @@
 from flask import Flask
 from flask_restful import Resource, Api
+from flask_cors import CORS
 from world import WorldOfMonopoly
 
 app = Flask(__name__)
 api = Api(app)
+CORS(app)
 
 globalWorld = WorldOfMonopoly()
 
@@ -25,7 +27,9 @@ class AiraMonopoly(Resource):
 
 class JoinMonopoly(Resource):
     def get(self, gameId):
-        return globalWorld.games[gameId].addPlayer()
+        p = globalWorld.games[gameId].addPlayer()
+        print(globalWorld)
+        return p
 
 class LeaveMonopoly(Resource):
     def get(self, gameId, who):
@@ -44,4 +48,4 @@ api.add_resource(LeaveMonopoly, '/game/leave/<int:gameId>/<int:who>')
 api.add_resource(SendMoney, '/game/send/<int:gameId>/<int:from>/<int:to>/<int:amount>')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(port=5000, debug=True)
