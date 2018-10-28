@@ -1,51 +1,50 @@
 from flask import Flask
-from flask_restful import Resource, Api
+from flask import jsonify
 from flask_cors import CORS
 from world import WorldOfMonopoly
 
 app = Flask(__name__)
-api = Api(app)
+#api = Api(app)
 CORS(app)
 
 globalWorld = WorldOfMonopoly()
 
-class DebugMode(Resource):
-    def get(self, gameId=None):
-        if gameId is not None:
-            return globalWorld.debugGetPlayersOfTheGame(gameId)
+@app.route('/debug/printstate')
+@app.route('/debug/printstate/<int:gameId>')
+def debug_printstate(gameId=None):
+    if gameId is not None:
+        return jsonify(globalWorld.debugGetPlayersOfTheGame(gameId))
 
-        r = {
-          "amount_of_games": globalWorld.debugAmountOfGames(),
-          "list_of_games": globalWorld.debugListOfGames()
-        }
+    r = {
+      "amount_of_games": globalWorld.debugAmountOfGames(),
+      "list_of_games": globalWorld.debugListOfGames()
+    }
 
-        return r
+    return jsonify(r)
 
-class AiraMonopoly(Resource):
-    def get(self):
-        return {'id' : globalWorld.createNewGame()}
+@app.route('/creategame')
+def create_game():
+    gameId = globalWorld.createNewGame()
+    playerId = globalWorld.games[gameId].addPlayer()
+    return jsonify({'gameId' : gameId, 'playerId': playerId})
 
-class JoinMonopoly(Resource):
-    def get(self, gameId):
-        p = globalWorld.games[gameId].addPlayer()
-        print(globalWorld)
-        return p
+@app.route('/game/join/<int:gameId>')
+def game_join(gameId):
+    p = globalWorld.games[gameId].addPlayer()
+    print(globalWorld)
+    return jsonify({'playerId': p})
 
-class LeaveMonopoly(Resource):
-    def get(self, gameId, who):
-        globalWorld.games[gameId].leaveTheGame(who)
-        return {'status': 'ok'}
+@app.route('/game/leave/<int:gameId>/<int:who>')
+def game_leave(gameId, who):
+    globalWorld.games[gameId].leaveTheGame(who)
+    return jsonify({'status': 'ok'})
 
-class SendMoney(Resource):
-    def get(self, gameId, from_player, to_player, amount):
-        globalWorld.games[gameId].send(from_player, to_player, amount)
-        return {'status': 'ok'}
+@app.route('/game/balance/<int:gameId>/<int:who>')
+def get_balance(gameId, who):
+    b = globalWorld.games[gameId].players[who].balance
+    return jsonify({'balance': b})
 
-api.add_resource(DebugMode, '/debug/printstate', '/debug/printstate/<int:gameId>', endpoint=None)
-api.add_resource(AiraMonopoly, '/creategame')
-api.add_resource(JoinMonopoly, '/game/join/<int:gameId>')
-api.add_resource(LeaveMonopoly, '/game/leave/<int:gameId>/<int:who>')
-api.add_resource(SendMoney, '/game/send/<int:gameId>/<int:from>/<int:to>/<int:amount>')
-
-if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+@app.route('/game/send/<int:gameId>/<int:from>/<int:to>/<int:amount>')
+def game_send(gameId, from_player, to_player, amount):
+    globalWorld.games[gameId].send(from_player, to_player, amount)
+    return jsonify({'status': 'ok'})
