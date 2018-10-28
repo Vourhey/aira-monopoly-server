@@ -1,4 +1,4 @@
 flask
-flask_restul
+flask_restful
 flask_cors
 
