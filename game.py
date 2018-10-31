@@ -12,7 +12,9 @@ class Game:
         self.players = {}
         self.txs = {}
         self.gameId = random.randint(0, 2**32)
-        self.players[0] = Player(True)  # add bank player
+
+        bankPlayer = Player(True)
+        self.players[bankPlayer.playerId] = bankPlayer  # add bank player
 
     def addPlayer(self):
         p = Player()

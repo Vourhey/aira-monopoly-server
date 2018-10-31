@@ -3,7 +3,7 @@ import key_gen as KG
 class Player:
     def __init__(self, bank=False):
         if bank:
-            self.playerId = 0
+            self.playerId = '0x0'
             self.balance = 999999
         else: 
             self.playerId = KG.new_address()
