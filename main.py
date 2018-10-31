@@ -34,17 +34,17 @@ def game_join(gameId):
     print(globalWorld)
     return jsonify({'playerId': p})
 
-@app.route('/game/leave/<int:gameId>/<int:who>')
+@app.route('/game/leave/<int:gameId>/<string:who>')
 def game_leave(gameId, who):
     globalWorld.games[gameId].leaveTheGame(who)
     return jsonify({'status': 'ok'})
 
-@app.route('/game/balance/<int:gameId>/<int:who>')
+@app.route('/game/balance/<int:gameId>/<string:who>')
 def get_balance(gameId, who):
     b = globalWorld.games[gameId].players[who].balance
     return jsonify({'balance': b})
 
-@app.route('/game/send/<int:gameId>/<int:from>/<int:to>/<int:amount>')
+@app.route('/game/send/<int:gameId>/<string:from_player>/<string:to_player>/<int:amount>')
 def game_send(gameId, from_player, to_player, amount):
     globalWorld.games[gameId].send(from_player, to_player, amount)
     return jsonify({'status': 'ok'})
