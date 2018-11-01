@@ -2,6 +2,7 @@ import random
 import paho.mqtt.publish as publish
 from player import Player
 from tx import Tx
+import ssl
 
 HOSTNAME = "mqtt.corp.aira.life"
 TRANSPORT = "websockets"
@@ -21,7 +22,7 @@ class Game:
         self.players[p.playerId] = p
 
         topic = 'game/{}/player/joined'.format(self.gameId)
-        publish.single(topic, str(p.playerId), hostname=HOSTNAME, transport=TRANSPORT, port=PORT)
+        publish.single(topic, str(p.playerId), hostname=HOSTNAME, transport=TRANSPORT, port=PORT, tls={'ca_certs': '/etc/nginx/ssl/mqtt.corp.aira.life/ca.cer', 'cert_reqs':ssl.CERT_NONE})
         return p.playerId
 
     def send(self, from_player, to_player, amount):
@@ -47,7 +48,7 @@ class Game:
                 'payload': tx.toString()
             }
         ]
-        publish.multiple(msgs_from, hostname=HOSTNAME, transport=TRANSPORT, port=PORT)
+        publish.multiple(msgs_from, hostname=HOSTNAME, transport=TRANSPORT, port=PORT, tls={'ca_certs': '/etc/nginx/ssl/mqtt.corp.aira.life/ca.cer', 'cert_reqs':ssl.CERT_NONE})
         
         msgs_to = [
             {
@@ -59,7 +60,7 @@ class Game:
                 'payload': tx.toString()
             }
         ]
-        publish.multiple(msgs_to, hostname=HOSTNAME, transport=TRANSPORT, port=PORT)
+        publish.multiple(msgs_to, hostname=HOSTNAME, transport=TRANSPORT, port=PORT, tls={'ca_certs': '/etc/nginx/ssl/mqtt.corp.aira.life/ca.cer', 'cert_reqs':ssl.CERT_NONE})
 
     def leaveTheGame(self, who):
         del self.players[who]
