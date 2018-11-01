@@ -19,23 +19,47 @@ class Game:
     def addPlayer(self):
         p = Player()
         self.players[p.playerId] = p
-        print("I'm going to publish")
-        publish.single('game/player/joined', str(p.playerId), hostname=HOSTNAME, transport=TRANSPORT, port=PORT)
-        print("Done {}".format(p.playerId))
+
+        topic = 'game/{}/player/joined'.format(self.gameId)
+        publish.single(topic, str(p.playerId), hostname=HOSTNAME, transport=TRANSPORT, port=PORT)
         return p.playerId
 
     def send(self, from_player, to_player, amount):
-        tx = Tx(from_player, to_player, amount)
         print("Transfering from {} to {} amount {}".format(from_player, to_player, amount))
+
+        if self.players[from_player].balance - amount >= 0:
+            self.players[from_player].balance -= amount
+            self.players[to_player].balance += amount    
+            success = True
+        else:
+            success = False
+
+        tx = Tx(from_player, to_player, amount, success)
         self.txs[tx.txId] = tx
-        self.players[from_player].balance -= amount
-        self.players[to_player].balance += amount
 
-        from_balance = self.players[from_player].balance
-        to_balance = self.players[to_player].balance
-        publish.single('game/player/updatebalance/' + from_player, str(from_balance), hostname=HOSTNAME, transport=TRANSPORT, port=PORT)
-
-        publish.single('game/player/updatebalance/' + to_player, str(to_balance), hostname=HOSTNAME, transport=TRANSPORT, port=PORT)
+        msgs_from = [
+            {
+                'topic': 'game/{}/player/{}'.format(self.gameId, from_player),
+                'payload': str(self.players[from_player].balance)
+            },
+            {
+                'topic': 'game/{}/txs/{}'.format(self.gameId, from_player),
+                'payload': tx.toString()
+            }
+        ]
+        publish.multiple(msgs_from, hostname=HOSTNAME, transport=TRANSPORT, port=PORT)
+        
+        msgs_to = [
+            {
+                'topic': 'game/{}/player/{}'.format(self.gameId, to_player),
+                'payload': str(self.players[to_player].balance)
+            },
+            {
+                'topic': 'game/{}/txs/{}'.format(self.gameId, to_player),
+                'payload': tx.toString()
+            }
+        ]
+        publish.multiple(msgs_to, hostname=HOSTNAME, transport=TRANSPORT, port=PORT)
 
     def leaveTheGame(self, who):
         del self.players[who]
