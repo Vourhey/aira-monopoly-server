@@ -1,12 +1,10 @@
 import random
-import paho.mqtt.publish as publish
 from player import Player
 from tx import Tx
-import ssl
+import config
+from approve import ApproveThread
+from mqtt_utils import publish_single, publish_multiple
 
-HOSTNAME = "mqtt.corp.aira.life"
-TRANSPORT = "websockets"
-PORT = 80
 
 class Game:
     def __init__(self):
@@ -22,11 +20,17 @@ class Game:
         self.players[p.playerId] = p
 
         topic = 'game/{}/player/joined'.format(self.gameId)
-        publish.single(topic, str(p.playerId), hostname=HOSTNAME, transport=TRANSPORT, port=PORT, tls={'ca_certs': '/etc/nginx/ssl/mqtt.corp.aira.life/ca.cer', 'cert_reqs':ssl.CERT_NONE})
+        publish_single(topic, str(p.playerId))
         return p.playerId
 
     def send(self, from_player, to_player, amount):
         print("Transfering from {} to {} amount {}".format(from_player, to_player, amount))
+
+        if from_player == config.BANK: 
+            print("Hey bank!")
+            athread = ApproveThread(self.gameId, len(self.players))
+            athread.start()
+            return
 
         if self.players[from_player].balance - amount >= 0:
             self.players[from_player].balance -= amount
@@ -48,7 +52,7 @@ class Game:
                 'payload': tx.toString()
             }
         ]
-        publish.multiple(msgs_from, hostname=HOSTNAME, transport=TRANSPORT, port=PORT, tls={'ca_certs': '/etc/nginx/ssl/mqtt.corp.aira.life/ca.cer', 'cert_reqs':ssl.CERT_NONE})
+        publish_multiple(msgs_from)
         
         msgs_to = [
             {
@@ -60,7 +64,7 @@ class Game:
                 'payload': tx.toString()
             }
         ]
-        publish.multiple(msgs_to, hostname=HOSTNAME, transport=TRANSPORT, port=PORT, tls={'ca_certs': '/etc/nginx/ssl/mqtt.corp.aira.life/ca.cer', 'cert_reqs':ssl.CERT_NONE})
+        publish_multiple(msgs_to)
 
     def leaveTheGame(self, who):
         del self.players[who]
