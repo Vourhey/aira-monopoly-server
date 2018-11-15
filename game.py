@@ -35,14 +35,15 @@ class Game:
         else:
             amount_of_approves = 0
 
-        athread = ApproveThread(self.gameId, amount_of_approves, self.transfer)
+        athread = ApproveThread(self.gameId, amount_of_approves, self.transfer, to_player, amount)
         athread.start()
 
     # this is a callback for the ApproveThread
-    def transfer(self):
-        print("Inside callback\nfrom_player is {} to_player is {} and amount is {}".format(self.from_player, self.to_player, self.amount))
+    def transfer(self, approved):
+        print("Inside callback\nfrom_player is {} to_player is {} and amount is {} approved {}".format(self.from_player, self.to_player, self.amount, approved))
 
-        if self.players[self.from_player].balance - self.amount >= 0:
+        if approved and self.players[self.from_player].balance - self.amount >= 0:
+
             self.players[self.from_player].balance -= self.amount
             self.players[self.to_player].balance += self.amount
             success = True
